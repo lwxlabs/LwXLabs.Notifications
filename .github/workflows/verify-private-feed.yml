@@ -1,0 +1,47 @@
+name: verify-private-feed
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: read
+
+jobs:
+  restore-consumer:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.401
+
+      - name: Restore private packages into an independent app
+        env:
+          LWXLABS_PACKAGES_TOKEN: ${{ secrets.LWXLABS_PACKAGES_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          token="${LWXLABS_PACKAGES_TOKEN:-$GITHUB_TOKEN}"
+          consumer="$RUNNER_TEMP/lwxlabs-notifications-private-consumer"
+          dotnet new console --framework net10.0 --output "$consumer"
+          cat > "$consumer/NuGet.Config" <<'EOF'
+          <?xml version="1.0" encoding="utf-8"?>
+          <configuration>
+            <packageSources>
+              <clear />
+              <add key="nuget.org" value="https://api.nuget.org/v3/index.json" />
+            </packageSources>
+          </configuration>
+          EOF
+          dotnet nuget add source \
+            --username "${{ github.actor }}" \
+            --password "$token" \
+            --store-password-in-clear-text \
+            --name lwxlabs-github \
+            --configfile "$consumer/NuGet.Config" \
+            "https://nuget.pkg.github.com/lwxlabs/index.json"
+          cd "$consumer"
+          dotnet add package LwXLabs.Notifications --version 0.1.0-preview.2
+          dotnet add package LwXLabs.Notifications.SignalR.Client --version 0.1.0-preview.2
+          printf '%s\n' 'Console.WriteLine(typeof(LwXLabs.Notifications.NotificationSender).FullName);' > Program.cs
+          dotnet run --configuration Release

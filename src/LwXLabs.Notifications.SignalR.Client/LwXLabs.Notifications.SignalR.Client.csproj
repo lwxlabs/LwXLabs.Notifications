@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFrameworks>net8.0;net9.0;net10.0</TargetFrameworks>
+    <PackageId>LwXLabs.Notifications.SignalR.Client</PackageId>
+    <Description>SignalR live receiver for LwXLabs.Notifications.</Description>
+    <PackageTags>notifications;signalr;realtime;client;components</PackageTags>
+    <IsPackable>true</IsPackable>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../LwXLabs.Notifications.Abstractions/LwXLabs.Notifications.Abstractions.csproj" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(TargetFramework)' == 'net8.0'">
+    <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="8.0.31" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(TargetFramework)' == 'net9.0'">
+    <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="9.0.20" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(TargetFramework)' == 'net10.0'">
+    <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="10.0.12" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFrameworks>netstandard2.0;netstandard2.1;net8.0;net9.0;net10.0</TargetFrameworks>
+    <PackageId>LwXLabs.Notifications.Abstractions</PackageId>
+    <Description>Transport-neutral contracts for LwXLabs.Notifications.</Description>
+    <PackageTags>notifications;push;signalr;components;dotnet</PackageTags>
+    <IsPackable>true</IsPackable>
+  </PropertyGroup>
+  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0' Or '$(TargetFramework)' == 'netstandard2.1'">
+    <PackageReference Include="System.Text.Json" Version="8.0.6" />
+  </ItemGroup>
+</Project>

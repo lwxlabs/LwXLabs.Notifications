@@ -1,0 +1,4 @@
+LwXLabs.Notifications
+Copyright (c) 2025-2026 lwxlabs
+
+This product includes third-party software. See THIRD-PARTY-NOTICES.txt.

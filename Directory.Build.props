@@ -1,0 +1,32 @@
+<Project>
+  <PropertyGroup>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+    <Version>0.1.0-preview.2</Version>
+    <Authors>lwxlabs</Authors>
+    <Company>lwxlabs</Company>
+    <Copyright>Copyright (c) 2025-2026 lwxlabs</Copyright>
+    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+    <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+    <PackageProjectUrl>https://github.com/lwxlabs/LwXLabs.Notifications</PackageProjectUrl>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <RepositoryType>git</RepositoryType>
+    <RepositoryUrl>https://github.com/lwxlabs/LwXLabs.Notifications</RepositoryUrl>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <IncludeSymbols>false</IncludeSymbols>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+    <ContinuousIntegrationBuild Condition="'$(GITHUB_ACTIONS)' == 'true'">true</ContinuousIntegrationBuild>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <Deterministic>true</Deterministic>
+  </PropertyGroup>
+  <ItemGroup Condition="'$(IsPackable)' != 'false'">
+    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="10.0.401" PrivateAssets="All" />
+    <None Include="$(MSBuildThisFileDirectory)README.md" Pack="true" PackagePath="/" />
+    <None Include="$(MSBuildThisFileDirectory)LICENSE.txt" Pack="true" PackagePath="/" />
+    <None Include="$(MSBuildThisFileDirectory)NOTICE.txt" Pack="true" PackagePath="/" />
+    <None Include="$(MSBuildThisFileDirectory)THIRD-PARTY-NOTICES.txt" Pack="true" PackagePath="/" />
+  </ItemGroup>
+</Project>

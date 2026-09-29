@@ -1,0 +1,46 @@
+name: ci
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+  packages: read
+
+jobs:
+  build-test-pack:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET SDKs
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: |
+            8.0.x
+            9.0.x
+            10.0.401
+
+      - name: Configure private dependency feed
+        env:
+          LWXLABS_PACKAGES_TOKEN: ${{ secrets.LWXLABS_PACKAGES_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          token="${LWXLABS_PACKAGES_TOKEN:-$GITHUB_TOKEN}"
+          dotnet nuget update source GitHub \
+            --source "https://nuget.pkg.github.com/lwxlabs/index.json" \
+            --username "${{ github.actor }}" \
+            --password "$token" \
+            --store-password-in-clear-text \
+            --configfile NuGet.config
+
+      - name: Build, test and pack
+        run: ./build/pack.sh
+
+      - name: Upload packages
+        uses: actions/upload-artifact@v4
+        with:
+          name: nuget-packages
+          path: artifacts/release/*

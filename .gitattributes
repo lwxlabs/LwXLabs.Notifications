@@ -1,0 +1,27 @@
+###############################################################################
+# Set default behavior to automatically normalize line endings.
+###############################################################################
+* text=auto
+
+# Common source/text formats
+*.cs text diff=csharp
+*.csproj text
+*.sln text
+*.props text
+*.targets text
+*.json text
+*.md text
+*.txt text
+*.yml text
+*.yaml text
+*.ps1 text
+*.sh text eol=lf
+
+# Binary package/artifact formats
+*.nupkg binary
+*.snupkg binary
+*.zip binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
