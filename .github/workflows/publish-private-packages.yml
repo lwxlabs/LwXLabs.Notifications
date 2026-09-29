@@ -2,9 +2,6 @@ name: publish-private-packages
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - main
 
 permissions:
   contents: read
@@ -58,6 +55,5 @@ jobs:
           for package in "${packages[@]}"; do
             dotnet nuget push "$package" \
               --source "https://nuget.pkg.github.com/lwxlabs/index.json" \
-              --api-key "$GH_PACKAGES_TOKEN" \
-              --skip-duplicate
+              --api-key "$GH_PACKAGES_TOKEN"
           done
