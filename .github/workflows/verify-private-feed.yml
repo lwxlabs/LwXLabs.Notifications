@@ -15,6 +15,9 @@ jobs:
         with:
           dotnet-version: 10.0.401
 
+      - name: Install .NET Android workload
+        run: dotnet workload install android --skip-manifest-update
+
       - name: Restore private packages into an independent app
         env:
           LWXLABS_PACKAGES_TOKEN: ${{ secrets.LWXLABS_PACKAGES_TOKEN }}
@@ -41,7 +44,14 @@ jobs:
             --configfile "$consumer/NuGet.Config" \
             "https://nuget.pkg.github.com/lwxlabs/index.json"
           cd "$consumer"
-          dotnet add package LwXLabs.Notifications --version 0.1.0-preview.2
-          dotnet add package LwXLabs.Notifications.SignalR.Client --version 0.1.0-preview.2
+          dotnet add package LwXLabs.Notifications --version 0.1.0-preview.3
+          dotnet add package LwXLabs.Notifications.SignalR.Client --version 0.1.0-preview.3
           printf '%s\n' 'Console.WriteLine(typeof(LwXLabs.Notifications.NotificationSender).FullName);' > Program.cs
           dotnet run --configuration Release
+
+          android_consumer="$RUNNER_TEMP/lwxlabs-notifications-android-consumer"
+          dotnet new android --output "$android_consumer"
+          cp "$consumer/NuGet.Config" "$android_consumer/NuGet.Config"
+          cd "$android_consumer"
+          dotnet add package LwXLabs.Notifications.Firebase.Android --version 0.1.0-preview.3
+          dotnet build --configuration Debug

@@ -5,8 +5,12 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="../../src/LwXLabs.Notifications.Abstractions/LwXLabs.Notifications.Abstractions.csproj" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.0" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.10.1" />
     <PackageReference Include="xunit.v3" Version="4.0.1" />
     <PackageReference Include="xunit.runner.visualstudio" Version="4.0.0" PrivateAssets="all" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="../../src/LwXLabs.Notifications.Firebase.Android/Core/*.cs" Link="FirebaseAndroidCore/%(Filename)%(Extension)" />
   </ItemGroup>
 </Project>

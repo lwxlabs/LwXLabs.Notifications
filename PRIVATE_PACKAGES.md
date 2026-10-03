@@ -1,18 +1,19 @@
 # Private preview packages
 
-The `0.1.0-preview.2` notification packages are prepared for the private `lwxlabs` GitHub NuGet feed through the manually dispatched `publish-private-packages` workflow.
+The `0.1.0-preview.3` notification packages are prepared for the private `lwxlabs` GitHub NuGet feed through the manually dispatched `publish-private-packages` workflow.
 
 Feed: `https://nuget.pkg.github.com/lwxlabs/index.json`
 
 Repository: `https://github.com/lwxlabs/LwXLabs.Notifications`
 
-The workflow publishes exactly these five packages:
+The workflow publishes exactly these six packages:
 
 - `LwXLabs.Notifications.Abstractions`
 - `LwXLabs.Notifications`
 - `LwXLabs.Notifications.SignalR.Client`
 - `LwXLabs.Notifications.AspNetCore`
 - `LwXLabs.Notifications.Firebase`
+- `LwXLabs.Notifications.Firebase.Android`
 
 The repository itself also restores private `LwXLab.Data` packages. In GitHub Actions, either grant this repository Actions access to the required private Data packages or add a repository secret named `LWXLABS_PACKAGES_TOKEN` containing a GitHub personal access token (classic) with `read:packages`. The publishing step uses the workflow's `GITHUB_TOKEN` with `packages: write` for the notification packages.
 
@@ -45,8 +46,9 @@ dotnet package search LwXLabs.Notifications --exact-match --prerelease `
 Install only the packages an application needs, for example:
 
 ```powershell
-dotnet add package LwXLabs.Notifications --version 0.1.0-preview.2
-dotnet add package LwXLabs.Notifications.SignalR.Client --version 0.1.0-preview.2
+dotnet add package LwXLabs.Notifications --version 0.1.0-preview.3
+dotnet add package LwXLabs.Notifications.SignalR.Client --version 0.1.0-preview.3
+dotnet add package LwXLabs.Notifications.Firebase.Android --version 0.1.0-preview.3  # Android projects only
 ```
 
 Use a new package version for every subsequent publish. GitHub Packages does not replace an existing package version.

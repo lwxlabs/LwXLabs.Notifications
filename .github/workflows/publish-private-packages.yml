@@ -21,6 +21,9 @@ jobs:
             9.0.x
             10.0.401
 
+      - name: Install .NET Android workload
+        run: dotnet workload install android --skip-manifest-update
+
       - name: Configure private dependency feed
         env:
           LWXLABS_PACKAGES_TOKEN: ${{ secrets.LWXLABS_PACKAGES_TOKEN }}
@@ -51,7 +54,7 @@ jobs:
             --configfile NuGet.config
           shopt -s nullglob
           packages=(artifacts/release/*.nupkg)
-          test "${#packages[@]}" -eq 5
+          test "${#packages[@]}" -eq 6
           for package in "${packages[@]}"; do
             dotnet nuget push "$package" \
               --source "https://nuget.pkg.github.com/lwxlabs/index.json" \

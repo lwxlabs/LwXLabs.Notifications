@@ -14,7 +14,8 @@ for project in \
   src/LwXLabs.Notifications/LwXLabs.Notifications.csproj \
   src/LwXLabs.Notifications.SignalR.Client/LwXLabs.Notifications.SignalR.Client.csproj \
   src/LwXLabs.Notifications.AspNetCore/LwXLabs.Notifications.AspNetCore.csproj \
-  src/LwXLabs.Notifications.Firebase/LwXLabs.Notifications.Firebase.csproj; do
+  src/LwXLabs.Notifications.Firebase/LwXLabs.Notifications.Firebase.csproj \
+  src/LwXLabs.Notifications.Firebase.Android/LwXLabs.Notifications.Firebase.Android.csproj; do
   dotnet pack "$project" -c Release --no-build --no-restore -o "$ARTIFACTS"
 done
 

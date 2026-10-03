@@ -4,5 +4,6 @@ LwXLabs.Notifications uses third-party packages including:
 - ASP.NET Core / Entity Framework Core (MIT)
 - Firebase Admin .NET SDK (Apache-2.0)
 - Google APIs .NET client libraries (Apache-2.0)
+- Xamarin.Firebase.Messaging Android bindings (MIT) and the Firebase Android SDK (Apache-2.0)
 
 Refer to the corresponding package/repository licenses for complete terms.

@@ -7,8 +7,8 @@
     <IsPackable>false</IsPackable>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="LwXLabs.Notifications" Version="0.1.0-preview.2" />
-    <PackageReference Include="LwXLabs.Notifications.SignalR.Client" Version="0.1.0-preview.2" />
+    <PackageReference Include="LwXLabs.Notifications" Version="0.1.0-preview.3" />
+    <PackageReference Include="LwXLabs.Notifications.SignalR.Client" Version="0.1.0-preview.3" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.12" />
   </ItemGroup>
 </Project>

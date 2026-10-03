@@ -13,6 +13,7 @@ This repository contains the reusable NuGet packages only. The deployable ASP.NE
 | `LwXLabs.Notifications.SignalR.Client` | Live receiver for .NET 8/9/10 clients |
 | `LwXLabs.Notifications.AspNetCore` | Server engine, SignalR hub, minimal EF storage and Flow durable delivery |
 | `LwXLabs.Notifications.Firebase` | Optional Firebase Cloud Messaging push transport |
+| `LwXLabs.Notifications.Firebase.Android` | Android FCM receiver, Firebase Installation ID registration, and notification permission helper |
 
 ## Send a normal notification
 
@@ -86,6 +87,43 @@ await receiver.StartAsync();
 
 Interactive component actions can be sent through SignalR or the authenticated HTTP fallback with `InvokeActionAsync` / `InvokeActionHttpAsync`.
 
+## Receive Firebase messages in an Android app
+
+Add `LwXLabs.Notifications.Firebase.Android` to a `net10.0-android` app. The app owns its Firebase registration and configuration. Put that app's `google-services.json` in the Android project, not in this package, and mark it with the `GoogleServicesJson` build action:
+
+```xml
+<PackageReference Include="LwXLabs.Notifications.Firebase.Android" Version="0.1.0-preview.3" />
+<GoogleServicesJson Include="Platforms\Android\google-services.json" />
+```
+
+Enable Firebase's current Installation ID registration mode and Android 13+ notification permission in the **consuming app's** `Platforms/Android/AndroidManifest.xml`:
+
+```xml
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+  <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+  <application>
+    <meta-data android:name="firebase_messaging_installation_id_enabled" android:value="true" />
+  </application>
+</manifest>
+```
+
+Register the package and one or more app-owned handlers in DI (for MAUI, use `MauiProgram.CreateMauiApp`; for plain .NET Android, use the app's `IServiceCollection`):
+
+```csharp
+builder.Services.AddLwXLabsNotificationsFirebaseAndroid();
+builder.Services.AddSingleton<IFirebaseAndroidNotificationHandler, MyFirebaseHandler>();
+
+// Once the app's service provider exists, on startup:
+await services.GetRequiredService<IFirebaseAndroidNotifications>().InitializeAsync();
+var installationId = await services.GetRequiredService<IFirebaseAndroidNotifications>().GetInstallationIdAsync();
+```
+
+`MyFirebaseHandler` implements `OnRegistrationAsync(FirebaseAndroidRegistrationChange, CancellationToken)` and `OnMessageAsync(FirebaseAndroidMessage, CancellationToken)`. Registration changes include `Obtained`, `Refreshed`, and `Confirmed` (the same ID on a later app start). Send `change.InstallationId` to your **trusted backend**, which calls `RegisterInstallationAsync` with `PushEndpointKind.FirebaseInstallationId`. Never put the server application API key in the Android app. Message callbacks expose title, body, message ID, sender, timestamps, and a copied data dictionary; your app decides what to display or open. Callbacks can run on a background thread, so marshal UI updates to the UI thread.
+
+On Android 13+, call `FirebaseAndroidNotificationPermission.RequestIfNeeded(activity, requestCode)` from an Activity at a suitable time and handle its permission result there. The helper returns `true` when permission is already granted. Permission controls visible notifications; the package does not post a notification or create a notification channel. Firebase delivers notification-only messages received in the background to the system tray, so those do not invoke this package's message callback until the app handles the launch intent. Use a data payload when the app must process a background message.
+
+Firebase callbacks received before DI initialization are saved and replayed at startup. Failed consumer callbacks are logged and retained for retry on a later initialization or incoming event. Consumers should handle at-least-once delivery and deduplicate on message ID where needed. The pending message inbox holds up to 100 messages; registration changes are not discarded by that bound.
+
 ## Repeat and expiry
 
 ```csharp
@@ -133,6 +171,8 @@ A GitHub classic PAT with package access is required by NuGet. The helper valida
 The deployable .NET 10 host, Docker/Compose files, Supabase host configuration, Firebase credentials guidance, and operational documentation now live in the separate `LwXLabs.Notifications.Server` project repository.
 
 `LwXLabs.Notifications.Firebase` remains a reusable package in this repository and uses Firebase Admin .NET `3.7.0`.
+
+`LwXLabs.Notifications.Firebase.Android` is a separate client package using Microsoft's `Xamarin.Firebase.Messaging` binding `125.1.3`. It targets `net10.0-android`. The current binding does not target .NET 8 Android, and the .NET 9 Android workload is out of support; the older targets are therefore not packaged here.
 
 ## Build and private packages
 

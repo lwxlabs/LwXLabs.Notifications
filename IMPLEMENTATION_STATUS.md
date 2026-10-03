@@ -13,6 +13,7 @@
 - SignalR hub delivery using per-installation receiver tokens (header-first; browser-compatible query fallback).
 - ACK tracking and durable delayed push fallback for `Auto` mode.
 - Firebase Cloud Messaging transport with per-app Firebase project configuration.
+- Android Firebase Cloud Messaging receive/bootstrap package using Installation ID registration, background service callbacks, durable callback replay, and notification permission helper.
 - Firebase Installation ID support plus legacy registration-token compatibility.
 - Topic synchronization for registered installations plus explicit installation unregister/cleanup.
 - Scheduled notifications, repeats, max deliveries, expiration and cancellation.
@@ -26,7 +27,7 @@
 ## Deliberately not hard-wired yet
 
 - MAUI platform notification UI adapters.
-- Android/iOS Firebase receive/bootstrap code.
+- iOS Firebase receive/bootstrap code.
 - Blazor component renderers.
 - Distributed SignalR backplane for multi-instance live delivery.
 - External webhook transport for component action callbacks.
@@ -41,4 +42,4 @@ The action endpoint and `INotificationActionSink` are already present so a later
 
 The package projects consume `LwXLab.Data.EntityFrameworkCore` 0.1.0-preview.3 through NuGet. The Flow package dependency remains version 1.2.8. Firebase Admin package/version and current SignalR package versions were checked against their current source/NuGet/docs.
 
-This repository split was performed without running restore, build, or tests. Run `build/pack.ps1` before publishing and do not publish if restore, build, or package tests report an error.
+The Android receiver's non-platform logic has automated tests for DI registration, registration changes, normalization, idempotent startup, callback replay, and failure isolation. The full solution restore/build, tests, and NuGet package creation must pass before publishing. An Android device test with a consuming app's Firebase configuration is still required to confirm actual device delivery and permission behavior.

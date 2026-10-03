@@ -8,7 +8,7 @@ Run:
 .\build\pack.ps1
 ```
 
-The script restores the package-only solution, builds it, runs the package tests, and packs the five NuGet packages into `artifacts/release`.
+The script restores the package-only solution, builds it, runs the package tests, and packs the six NuGet packages into `artifacts/release`.
 
 Expected packages:
 
@@ -18,6 +18,7 @@ LwXLabs.Notifications.*.nupkg
 LwXLabs.Notifications.SignalR.Client.*.nupkg
 LwXLabs.Notifications.AspNetCore.*.nupkg
 LwXLabs.Notifications.Firebase.*.nupkg
+LwXLabs.Notifications.Firebase.Android.*.nupkg
 ```
 
 Do not publish if restore, build, tests, or packing fail.
@@ -30,7 +31,7 @@ The workflow:
 
 1. Authenticates the existing private `LwXLab.Data` dependency feed.
 2. Runs `build/pack.sh`.
-3. Requires exactly five `.nupkg` files.
+3. Requires exactly six `.nupkg` files.
 4. Pushes them to `https://nuget.pkg.github.com/lwxlabs/index.json` with the workflow `GITHUB_TOKEN`.
 
 If `GITHUB_TOKEN` cannot read the private Data packages, either grant `lwxlabs/LwXLabs.Notifications` Actions access to those packages or configure the `LWXLABS_PACKAGES_TOKEN` repository secret with a classic PAT that has `read:packages`.

@@ -14,6 +14,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LwXLabs.Notifications.Fireb
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LwXLabs.Notifications.Tests", "tests\LwXLabs.Notifications.Tests\LwXLabs.Notifications.Tests.csproj", "{A7A77777-7777-4777-8777-777777777777}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LwXLabs.Notifications.Firebase.Android", "src\LwXLabs.Notifications.Firebase.Android\LwXLabs.Notifications.Firebase.Android.csproj", "{EFA5EBAC-19FF-4D22-AABD-BDD54328EF7E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -44,5 +46,9 @@ Global
 		{A7A77777-7777-4777-8777-777777777777}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A7A77777-7777-4777-8777-777777777777}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A7A77777-7777-4777-8777-777777777777}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EFA5EBAC-19FF-4D22-AABD-BDD54328EF7E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EFA5EBAC-19FF-4D22-AABD-BDD54328EF7E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EFA5EBAC-19FF-4D22-AABD-BDD54328EF7E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EFA5EBAC-19FF-4D22-AABD-BDD54328EF7E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
