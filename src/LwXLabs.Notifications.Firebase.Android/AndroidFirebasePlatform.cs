@@ -19,10 +19,11 @@ internal sealed class AndroidFirebasePlatform : IFirebaseAndroidPlatform
         return Task.CompletedTask;
     }
 
-    public async Task<string> RegisterAndGetInstallationIdAsync(CancellationToken cancellationToken)
+    public bool IsAutoRegistrationEnabled => FirebaseMessaging.Instance.AutoInitEnabled;
+
+    public async Task RegisterAsync(CancellationToken cancellationToken)
     {
         await AwaitAsync(FirebaseMessaging.Instance.Register(), cancellationToken).ConfigureAwait(false);
-        return await GetInstallationIdAsync(cancellationToken).ConfigureAwait(false);
     }
 
     public async Task<string> GetInstallationIdAsync(CancellationToken cancellationToken)

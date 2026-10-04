@@ -13,7 +13,7 @@ internal static class FirebaseAndroidCoreRegistration
         services.TryAddSingleton(sp => new FirebaseAndroidPipeline(
             sp.GetRequiredService<IFirebaseAndroidPlatform>(),
             sp.GetRequiredService<IFirebaseAndroidEventStore>(),
-            sp.GetServices<IFirebaseAndroidNotificationHandler>(), reportError));
+            () => sp.GetServices<IFirebaseAndroidNotificationHandler>(), reportError));
         return services;
     }
 }

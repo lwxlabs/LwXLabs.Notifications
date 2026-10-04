@@ -32,7 +32,8 @@ internal sealed class FirebaseAndroidJournalState
 internal interface IFirebaseAndroidPlatform
 {
     Task InitializeAsync(CancellationToken cancellationToken);
-    Task<string> RegisterAndGetInstallationIdAsync(CancellationToken cancellationToken);
+    bool IsAutoRegistrationEnabled { get; }
+    Task RegisterAsync(CancellationToken cancellationToken);
     Task<string> GetInstallationIdAsync(CancellationToken cancellationToken);
 }
 
@@ -56,18 +57,18 @@ internal sealed class FirebaseAndroidPipeline
 {
     private readonly IFirebaseAndroidPlatform _platform;
     private readonly IFirebaseAndroidEventStore _store;
-    private readonly IReadOnlyList<IFirebaseAndroidNotificationHandler> _handlers;
+    private readonly Func<IEnumerable<IFirebaseAndroidNotificationHandler>> _handlers;
     private readonly Action<Exception> _reportError;
     private readonly SemaphoreSlim _initialization = new(1, 1);
     private readonly SemaphoreSlim _dispatch = new(1, 1);
     private bool _initialized;
 
     public FirebaseAndroidPipeline(IFirebaseAndroidPlatform platform, IFirebaseAndroidEventStore store,
-        IEnumerable<IFirebaseAndroidNotificationHandler> handlers, Action<Exception> reportError)
+        Func<IEnumerable<IFirebaseAndroidNotificationHandler>> handlers, Action<Exception> reportError)
     {
         _platform = platform;
         _store = store;
-        _handlers = handlers.ToArray();
+        _handlers = handlers;
         _reportError = reportError;
     }
 
@@ -79,7 +80,9 @@ internal sealed class FirebaseAndroidPipeline
             if (!_initialized)
             {
                 await _platform.InitializeAsync(cancellationToken).ConfigureAwait(false);
-                var installationId = await _platform.RegisterAndGetInstallationIdAsync(cancellationToken).ConfigureAwait(false);
+                if (!_platform.IsAutoRegistrationEnabled)
+                    await _platform.RegisterAsync(cancellationToken).ConfigureAwait(false);
+                var installationId = await _platform.GetInstallationIdAsync(cancellationToken).ConfigureAwait(false);
                 _store.RecordInstallationId(installationId, confirmCurrent: true);
                 _initialized = true;
             }
@@ -104,12 +107,13 @@ internal sealed class FirebaseAndroidPipeline
         await _dispatch.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
+            var handlers = _handlers().ToArray();
             while (_store.Peek() is { } item)
             {
-                if (_handlers.Count == 0) return;
+                if (handlers.Length == 0) return;
                 try
                 {
-                    foreach (var handler in _handlers)
+                    foreach (var handler in handlers)
                     {
                         if (item.Registration != null) await handler.OnRegistrationAsync(item.Registration, cancellationToken).ConfigureAwait(false);
                         else if (item.Message != null) await handler.OnMessageAsync(item.Message, cancellationToken).ConfigureAwait(false);

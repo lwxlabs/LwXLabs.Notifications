@@ -30,6 +30,28 @@ public sealed class FirebaseAndroidCoreTests
     }
 
     [Fact]
+    public async Task Pipeline_resolution_defers_consuming_handlers_until_dispatch()
+    {
+        var services = new ServiceCollection();
+        services.AddSingleton<IFirebaseAndroidPlatform>(new FakePlatform("fid"));
+        services.AddSingleton<IFirebaseAndroidJournalStorage>(new MemoryStorage());
+        var handlerResolutions = 0;
+        services.AddSingleton<IFirebaseAndroidNotificationHandler>(_ =>
+        {
+            Interlocked.Increment(ref handlerResolutions);
+            return new RecordingHandler();
+        });
+        FirebaseAndroidCoreRegistration.AddCore(services, _ => { }, _ => { });
+
+        using var provider = services.BuildServiceProvider();
+        var pipeline = provider.GetRequiredService<FirebaseAndroidPipeline>();
+
+        Assert.Equal(0, handlerResolutions);
+        await pipeline.InitializeAsync(TestContext.Current.CancellationToken);
+        Assert.Equal(1, handlerResolutions);
+    }
+
+    [Fact]
     public void Registration_journal_records_first_and_changed_ids_once_and_replays_from_storage()
     {
         var storage = new MemoryStorage();
@@ -74,7 +96,7 @@ public sealed class FirebaseAndroidCoreTests
         var platform = new FakePlatform("fid");
         var handler = new RecordingHandler();
         var journal = new FirebaseAndroidEventJournal(new MemoryStorage(), _ => { });
-        var pipeline = new FirebaseAndroidPipeline(platform, journal, new[] { handler }, _ => { });
+        var pipeline = new FirebaseAndroidPipeline(platform, journal, () => new[] { handler }, _ => { });
 
         await Task.WhenAll(Enumerable.Range(0, 10).Select(_ => pipeline.InitializeAsync(TestContext.Current.CancellationToken)));
 
@@ -85,17 +107,33 @@ public sealed class FirebaseAndroidCoreTests
     }
 
     [Fact]
+    public async Task Auto_registration_enabled_skips_manual_registration_during_startup()
+    {
+        var platform = new FakePlatform("fid", autoRegistrationEnabled: true);
+        var handler = new RecordingHandler();
+        var pipeline = new FirebaseAndroidPipeline(platform,
+            new FirebaseAndroidEventJournal(new MemoryStorage(), _ => { }), () => new[] { handler }, _ => { });
+
+        await pipeline.InitializeAsync(TestContext.Current.CancellationToken);
+
+        Assert.Equal(1, platform.InitializeCount);
+        Assert.Equal(0, platform.RegisterCount);
+        Assert.Single(handler.Registrations);
+        Assert.Equal("fid", handler.Registrations[0].InstallationId);
+    }
+
+    [Fact]
     public async Task New_process_confirms_unchanged_installation_id_for_backend_resync()
     {
         var storage = new MemoryStorage();
         var firstHandler = new RecordingHandler();
         var first = new FirebaseAndroidPipeline(new FakePlatform("fid"),
-            new FirebaseAndroidEventJournal(storage, _ => { }, new FirebaseAndroidProcessState()), new[] { firstHandler }, _ => { });
+            new FirebaseAndroidEventJournal(storage, _ => { }, new FirebaseAndroidProcessState()), () => new[] { firstHandler }, _ => { });
         await first.InitializeAsync(TestContext.Current.CancellationToken);
 
         var nextHandler = new RecordingHandler();
         var next = new FirebaseAndroidPipeline(new FakePlatform("fid"),
-            new FirebaseAndroidEventJournal(storage, _ => { }, new FirebaseAndroidProcessState()), new[] { nextHandler }, _ => { });
+            new FirebaseAndroidEventJournal(storage, _ => { }, new FirebaseAndroidProcessState()), () => new[] { nextHandler }, _ => { });
         await next.InitializeAsync(TestContext.Current.CancellationToken);
 
         Assert.Single(nextHandler.Registrations);
@@ -111,7 +149,7 @@ public sealed class FirebaseAndroidCoreTests
         nativeService.RecordInstallationId("fid", confirmCurrent: true);
         var handler = new RecordingHandler();
         var pipeline = new FirebaseAndroidPipeline(new FakePlatform("fid"),
-            new FirebaseAndroidEventJournal(storage, _ => { }, process), new[] { handler }, _ => { });
+            new FirebaseAndroidEventJournal(storage, _ => { }, process), () => new[] { handler }, _ => { });
 
         await pipeline.InitializeAsync(TestContext.Current.CancellationToken);
 
@@ -123,7 +161,7 @@ public sealed class FirebaseAndroidCoreTests
     {
         var handler = new RecordingHandler();
         var pipeline = new FirebaseAndroidPipeline(new FakePlatform("fid"),
-            new FirebaseAndroidEventJournal(new MemoryStorage(), _ => { }), new[] { handler }, _ => { });
+            new FirebaseAndroidEventJournal(new MemoryStorage(), _ => { }), () => new[] { handler }, _ => { });
 
         var id = await pipeline.GetInstallationIdAsync(TestContext.Current.CancellationToken);
 
@@ -137,7 +175,7 @@ public sealed class FirebaseAndroidCoreTests
         var errors = new List<Exception>();
         var handler = new RecordingHandler { FailNextRegistration = true };
         var journal = new FirebaseAndroidEventJournal(new MemoryStorage(), _ => { });
-        var pipeline = new FirebaseAndroidPipeline(new FakePlatform("fid"), journal, new[] { handler }, errors.Add);
+        var pipeline = new FirebaseAndroidPipeline(new FakePlatform("fid"), journal, () => new[] { handler }, errors.Add);
 
         await pipeline.InitializeAsync(TestContext.Current.CancellationToken);
         Assert.Single(errors);
@@ -157,7 +195,7 @@ public sealed class FirebaseAndroidCoreTests
             new[] { new KeyValuePair<string, string>("key", "value") }));
         var handler = new RecordingHandler();
         var pipeline = new FirebaseAndroidPipeline(new FakePlatform("fid"),
-            new FirebaseAndroidEventJournal(storage, _ => { }), new[] { handler }, _ => { });
+            new FirebaseAndroidEventJournal(storage, _ => { }), () => new[] { handler }, _ => { });
 
         await pipeline.InitializeAsync(TestContext.Current.CancellationToken);
 
@@ -193,13 +231,14 @@ public sealed class FirebaseAndroidCoreTests
         };
     }
 
-    private sealed class FakePlatform(string installationId) : IFirebaseAndroidPlatform
+    private sealed class FakePlatform(string installationId, bool autoRegistrationEnabled = false) : IFirebaseAndroidPlatform
     {
         public int InitializeCount { get; private set; }
         public int RegisterCount { get; private set; }
+        public bool IsAutoRegistrationEnabled => autoRegistrationEnabled;
         public Task InitializeAsync(CancellationToken cancellationToken) { InitializeCount++; return Task.CompletedTask; }
-        public Task<string> RegisterAndGetInstallationIdAsync(CancellationToken cancellationToken)
-        { RegisterCount++; return Task.FromResult(installationId); }
+        public Task RegisterAsync(CancellationToken cancellationToken)
+        { RegisterCount++; return Task.CompletedTask; }
         public Task<string> GetInstallationIdAsync(CancellationToken cancellationToken) => Task.FromResult(installationId);
     }
 
