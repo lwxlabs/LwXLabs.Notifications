@@ -7,6 +7,14 @@ using Firebase.Messaging;
 
 namespace LwXLabs.Notifications.Firebase.Android;
 
+public static class FirebaseAndroidBroadcasts
+{
+    // Package-scoped explicit broadcast. Applications can opt in to very short,
+    // local-only notification rendering before their full DI/network stack is ready.
+    public const string MessageReceivedAction =
+        "com.lwxlabs.notifications.firebase.MESSAGE_RECEIVED";
+}
+
 [Service(Exported = false)]
 [IntentFilter(new[] { "com.google.firebase.MESSAGING_EVENT" })]
 public sealed class LwXLabsFirebaseMessagingService : FirebaseMessagingService
@@ -24,6 +32,19 @@ public sealed class LwXLabsFirebaseMessagingService : FirebaseMessagingService
     public override void OnMessageReceived(RemoteMessage message)
     {
         base.OnMessageReceived(message);
+
+        // Give the application a process-local, explicit wakeup before the full
+        // Firebase pipeline/DI graph is available. This lets a data-only FCM
+        // message render a conversation/bubble notification even after a cold
+        // background process start. No network work belongs in this receiver.
+        var broadcast = new Intent(FirebaseAndroidBroadcasts.MessageReceivedAction);
+        broadcast.SetPackage(PackageName);
+        if (!string.IsNullOrWhiteSpace(message.MessageId))
+            broadcast.PutExtra("lwx_message_id", message.MessageId);
+        foreach (var pair in message.Data)
+            broadcast.PutExtra(pair.Key, pair.Value);
+        SendBroadcast(broadcast);
+
         var normalized = FirebaseAndroidMessageNormalizer.Normalize(
             message.MessageId, message.From, message.CollapseKey, message.SentTime,
             message.Ttl, message.GetNotification()?.Title, message.GetNotification()?.Body, message.Data);

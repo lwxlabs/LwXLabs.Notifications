@@ -84,7 +84,32 @@ internal sealed class FirebasePushTransport : INotificationPushTransport, IDispo
         };
         if (inline) data["lwx_payload"] = envelopeJson;
 
-        var message = new Message { Data = data, Topic = topic };
+        if (!string.IsNullOrWhiteSpace(request.Envelope.Content.Title))
+            data["lwx_title"] = request.Envelope.Content.Title;
+        if (!string.IsNullOrWhiteSpace(request.Envelope.Content.Body))
+            data["lwx_body"] = request.Envelope.Content.Body;
+        foreach (var key in new[] { "deviceId", "kind", "cursor" })
+            if (request.Envelope.Metadata.TryGetValue(key, out var value) &&
+                !string.IsNullOrWhiteSpace(value))
+                data["lwx_" + key] = value;
+
+        var dataOnly = MetadataBool(request.Envelope.Metadata, "lwx.android.dataOnly");
+        var priority = request.Envelope.Metadata.TryGetValue("lwx.android.priority", out var configuredPriority) &&
+                       string.Equals(configuredPriority, "high", StringComparison.OrdinalIgnoreCase)
+            ? FirebaseAdmin.Messaging.Priority.High
+            : FirebaseAdmin.Messaging.Priority.Normal;
+        request.Envelope.Metadata.TryGetValue("lwx.android.collapseKey", out var collapseKey);
+
+        var message = new Message
+        {
+            Data = data,
+            Topic = topic,
+            Android = new AndroidConfig
+            {
+                Priority = priority,
+                CollapseKey = string.IsNullOrWhiteSpace(collapseKey) ? null : collapseKey
+            }
+        };
         if (endpoint != null)
         {
             if (endpoint.Kind == PushEndpointKind.FirebaseInstallationId)
@@ -95,7 +120,9 @@ internal sealed class FirebasePushTransport : INotificationPushTransport, IDispo
 #pragma warning restore CS0618
         }
 
-        if (!string.IsNullOrWhiteSpace(request.Envelope.Content.Title) || !string.IsNullOrWhiteSpace(request.Envelope.Content.Body))
+        if (!dataOnly &&
+            (!string.IsNullOrWhiteSpace(request.Envelope.Content.Title) ||
+             !string.IsNullOrWhiteSpace(request.Envelope.Content.Body)))
         {
             message.Notification = new FirebaseAdmin.Messaging.Notification
             {
@@ -105,6 +132,13 @@ internal sealed class FirebasePushTransport : INotificationPushTransport, IDispo
         }
         return message;
     }
+
+    private static bool MetadataBool(
+        IReadOnlyDictionary<string, string> metadata,
+        string key) =>
+        metadata.TryGetValue(key, out var value) &&
+        bool.TryParse(value, out var parsed) &&
+        parsed;
 
     private string GetProjectId(string appKey)
     {
