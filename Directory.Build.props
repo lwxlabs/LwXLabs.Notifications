@@ -28,5 +28,6 @@
     <None Include="$(MSBuildThisFileDirectory)LICENSE.txt" Pack="true" PackagePath="/" />
     <None Include="$(MSBuildThisFileDirectory)NOTICE.txt" Pack="true" PackagePath="/" />
     <None Include="$(MSBuildThisFileDirectory)THIRD-PARTY-NOTICES.txt" Pack="true" PackagePath="/" />
+    <None Include="$(MSBuildThisFileDirectory)SECURITY.md" Pack="true" PackagePath="/" />
   </ItemGroup>
 </Project>

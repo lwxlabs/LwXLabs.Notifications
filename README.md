@@ -2,7 +2,7 @@
 
 A reusable notification and small-component delivery platform for .NET applications.
 
-This repository contains the reusable NuGet packages only. The deployable ASP.NET Core host is maintained separately in the `LwXLabs.Notifications.Server` project repository. The server-side packages use `LwXLabs.Flow.Messaging` for durable outbox/inbox delivery and `LwXLab.Data` for provider-neutral EF Core registration.
+Reusable .NET notification packages with SignalR, Firebase Cloud Messaging and durable delivery through [Flow](https://github.com/lwxlabs/LwXLab.Flow) and [Data](https://github.com/lwxlabs/LwXLab.Data). The application host is not included.
 
 ## Projects
 
@@ -21,7 +21,7 @@ This repository contains the reusable NuGet packages only. The deployable ASP.NE
 builder.Services.AddLwXLabsNotifications(options =>
 {
     options.ServerUrl = new Uri(configuration["Notifications:Server"]!);
-    options.Application = "home";
+    options.Application = "sample";
     options.ApiKey = configuration["Notifications:ApiKey"]!;
 });
 
@@ -156,36 +156,21 @@ Notification-owned tables contain only:
 
 Completed items remain fetchable/actionable only until their configured `ExpiresAt`, then the cleanup worker removes them. Cancelled/expired rows are removed quickly. Flow's completed inbox/outbox rows are also pruned after short retention, while failed/dead-letter infrastructure rows are retained longer for diagnostics.
 
-## Server-side package dependencies
+## Build from source
 
-`LwXLabs.Notifications.AspNetCore` restores `LwXLab.Data.EntityFrameworkCore` version `0.1.0-preview.3` from the private `lwxlabs` GitHub NuGet feed configured in `NuGet.config`. The source checkout is no longer embedded in this repository.
-
-A GitHub classic PAT with package access is required by NuGet. The helper validates the private feed, restores this package solution, and runs the package tests without writing the token to the repository:
-
-```powershell
-.\build\Verify-PrivateDataPackages.ps1
-```
-
-## Standalone server
-
-The deployable .NET 10 host, Docker/Compose files, Supabase host configuration, Firebase credentials guidance, and operational documentation now live in the separate `LwXLabs.Notifications.Server` project repository.
-
-`LwXLabs.Notifications.Firebase` remains a reusable package in this repository and uses Firebase Admin .NET `3.7.0`.
-
-`LwXLabs.Notifications.Firebase.Android` is a separate client package using Microsoft's `Xamarin.Firebase.Messaging` binding `125.1.3`. It targets `net10.0-android`. The current binding does not target .NET 8 Android, and the .NET 9 Android workload is out of support; the older targets are therefore not packaged here.
-
-## Build and private packages
-
-```powershell
-.\build\pack.ps1
-```
-
-or
+Requires the .NET 10 SDK and Android workload.
 
 ```bash
-./build/pack.sh
+dotnet workload install android
+git clone https://github.com/lwxlabs/LwXLab.Data.git ../LwXLab.Data
+git -C ../LwXLab.Data checkout ec174f06faf957a9f4be3aecacacb9aba2caa9b5
+pwsh -File build/pack-public.ps1 -DataSource ../LwXLab.Data
 ```
 
-Packages are written to `artifacts/release`. See `PUBLISHING.md` for validation and publishing steps and `PRIVATE_PACKAGES.md` for private GitHub Packages consumption.
+The public build uses NuGet.org and builds the required Data packages from source. No private feed credentials are needed. The Data repository must be public for the clone and public CI to work.
 
-See `IMPLEMENTATION_STATUS.md` for what is implemented and what still needs platform-specific work.
+Packages are written to `artifacts/public`. The existing private feed workflow is documented in [PRIVATE_PACKAGES.md](PRIVATE_PACKAGES.md).
+
+The Android receiver targets .NET 10 Android. Use your own ASP.NET Core host and Firebase project; production deployment is not included.
+
+See [IMPLEMENTATION_STATUS.md](IMPLEMENTATION_STATUS.md) for platform limitations. Apache-2.0 license.

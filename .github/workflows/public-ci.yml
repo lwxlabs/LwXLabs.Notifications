@@ -1,0 +1,46 @@
+name: public-ci
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-test-pack:
+    if: ${{ !github.event.repository.private }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: notifications
+          persist-credentials: false
+
+      - uses: actions/checkout@v4
+        with:
+          repository: lwxlabs/LwXLab.Data
+          ref: ec174f06faf957a9f4be3aecacacb9aba2caa9b5
+          path: data
+          persist-credentials: false
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: |
+            8.0.x
+            9.0.x
+            10.0.401
+
+      - name: Install Android workload
+        working-directory: notifications
+        run: dotnet workload install android --skip-manifest-update
+
+      - name: Build, test and pack
+        working-directory: notifications
+        run: pwsh -NoProfile -File build/pack-public.ps1 -DataSource ../data
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: nuget-packages
+          path: notifications/artifacts/public/*.nupkg
